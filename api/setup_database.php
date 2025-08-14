@@ -1,6 +1,6 @@
 <?php
 // One-time setup script for Railway database
-include "api/config/config.php";
+include __DIR__ . "/config/config.php";
 
 $setupQueries = [
     "CREATE TABLE IF NOT EXISTS admin (
