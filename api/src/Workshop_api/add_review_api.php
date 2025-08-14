@@ -1,5 +1,5 @@
 <?php
-include "../config/config.php";
+include __DIR__ . "/../../config/config.php";
 
 // Set content type and CORS headers
 header('Content-Type: application/json');

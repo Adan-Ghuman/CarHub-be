@@ -1,7 +1,7 @@
 
 <?php
 
-include "../config/config.php";
+include __DIR__ . "/../../config/config.php";
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');

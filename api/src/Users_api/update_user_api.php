@@ -1,6 +1,6 @@
 <?php
 
-include "../config/config.php";
+include __DIR__ . "/../../config/config.php";
 
 // Decode JSON data from the mobile app
 $data = json_decode(file_get_contents("php://input"));

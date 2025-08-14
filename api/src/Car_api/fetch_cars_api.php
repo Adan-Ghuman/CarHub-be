@@ -1,6 +1,6 @@
 <?php
 
-include "../config/config.php";
+include __DIR__ . "/../../config/config.php";
 
 // Add CORS headers
 header('Content-Type: application/json');
