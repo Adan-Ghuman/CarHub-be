@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/config/config.php';
 
 // Basic routing
 $request_uri = $_SERVER['REQUEST_URI'];
@@ -14,7 +14,7 @@ $path_parts = explode('/', $path);
 // Simple router
 if (isset($path_parts[0])) {
     $api_name = $path_parts[0];
-    $api_path = __DIR__ . '/../src/' . $api_name;
+    $api_path = __DIR__ . '/src/' . $api_name;
 
     if (is_dir($api_path)) {
         // Look for a handler file, e.g., index.php or a file with the second part of the path
