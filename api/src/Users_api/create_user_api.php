@@ -3,15 +3,26 @@
 
 include "../config.php";
 
-// Decode JSON data from the mobile app
-$data = json_decode(file_get_contents("php://input"));
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, X-Requested-With, User-Agent, Accept, Cache-Control, Pragma');
 
-// Extract user attributes
-$name = $data->name;
-$email = $data->email;
-$phoneNumber = $data->phoneNumber;
-$password = $data->password;
-$location = $data->location;
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Decode JSON data from the mobile app
+    $data = json_decode(file_get_contents("php://input"));
+
+    // Extract user attributes
+    $name = $data->name;
+    $email = $data->email;
+    $phoneNumber = $data->phoneNumber;
+    $password = $data->password;
+    $location = $data->location;
 
 
 // Insert user data into the 'users' table
@@ -27,9 +38,13 @@ if ($result) {
 }
 
 // Send the JSON response
-header('Content-Type: application/json');
 echo json_encode($response);
 
 // Close the database connection
 mysqli_close($conn);
+
+} else {
+    http_response_code(405);
+    echo json_encode(['error' => 'Method not allowed']);
+}
 ?>
