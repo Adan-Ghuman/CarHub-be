@@ -1,9 +1,28 @@
 <?php
 
-$servername = "localhost";
+$servername = "interchange.proxy.rlwy.net";
+$username = "root";
+$password = "RBexaveASpsEcScgfLHIfTrkpsvrQjzO";
+$database = "railway";
+$port = 44546;
+
+// Define constants for PDO usage
+define('DB_HOST', $servername);
+define('DB_USER', $username);
+define('DB_PASS', $password);
+define('DB_NAME', $database);
+define('DB_PORT', $port);
+
+// Create MySQLi connection with port
+$conn = new mysqli($servername, $username, $password, $database, $port);
+
+// Check MySQLi connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+} = "localhost";
 $username = "root";
 $password = "";
-$database = "carhubapp";
+$database = "if0_39677740_carhub";
 
 // Define constants for PDO usage
 define('DB_HOST', $servername);
