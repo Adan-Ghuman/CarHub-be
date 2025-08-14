@@ -1,5 +1,5 @@
 <?php
-include "../config.php";
+include "../config/config.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $jsonInput = file_get_contents('php://input');

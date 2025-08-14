@@ -9,7 +9,7 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET');
 header('Access-Control-Allow-Headers: Content-Type, ngrok-skip-browser-warning');
 
-require_once '../config.php';
+require_once '../config/config.php';
 
 try {
     // First check if required tables exist

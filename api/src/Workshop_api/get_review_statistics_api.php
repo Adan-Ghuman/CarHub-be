@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-require_once '../config.php';
+require_once '../config/config.php';
 
 // Enable error reporting for debugging
 error_reporting(E_ALL);

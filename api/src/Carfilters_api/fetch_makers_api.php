@@ -1,7 +1,7 @@
 <?php
 header('content-Type: application/json');
 header('Acess-control-Allow-Orign: *');
-include '../config.php';
+include '../config/config.php';
 
 $query="SELECT id,maker_name FROM tbl_makers";
 
