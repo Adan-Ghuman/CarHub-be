@@ -477,45 +477,6 @@ try {
         $results[] = "Error creating car images table: " . mysqli_error($conn);
     }
 
-    // Create indexes for better performance (skip if already exist)
-    $indexQueries = [
-        "CREATE INDEX idx_workshop_services_workshop_id ON workshop_services(workshop_id)",
-        "CREATE INDEX idx_workshop_services_active ON workshop_services(is_active)",
-        "CREATE INDEX idx_workshops_status ON workshops(status)",
-        "CREATE INDEX idx_workshops_verified ON workshops(is_verified)",
-        "CREATE INDEX idx_workshop_bookings_workshop_id ON workshop_bookings(workshop_id)",
-        "CREATE INDEX idx_workshop_bookings_user_id ON workshop_bookings(user_id)",
-        "CREATE INDEX idx_workshop_bookings_date ON workshop_bookings(booking_date)",
-        "CREATE INDEX idx_workshop_reviews_workshop_id ON workshop_reviews(workshop_id)",
-        "CREATE INDEX idx_reviews_workshop_id ON reviews(workshop_id)",
-        "CREATE INDEX idx_service_bookings_workshop_id ON service_bookings(workshop_id)",
-        "CREATE INDEX idx_operating_hours_workshop_id ON workshop_operating_hours(workshop_id)",
-        "CREATE INDEX idx_bookings_workshop_id ON bookings(workshop_id)",
-        "CREATE INDEX idx_bookings_user_id ON bookings(user_id)",
-        "CREATE INDEX idx_bookings_date ON bookings(booking_date)",
-        "CREATE INDEX idx_services_workshop_id ON services(workshop_id)",
-        "CREATE INDEX idx_services_active ON services(is_active)",
-        "CREATE INDEX idx_carimages_car_id ON carimages(CarID)",
-        "CREATE INDEX idx_cars_seller_id ON cars(SellerID)",
-        "CREATE INDEX idx_cars_status ON cars(carStatus)",
-        "CREATE INDEX idx_users_email ON users(Email)",
-        "CREATE INDEX idx_users_role ON users(role)",
-        "CREATE INDEX idx_admin_username ON admin(username)",
-        "CREATE INDEX idx_admin_email ON admin(email)",
-        "CREATE INDEX idx_user_sessions_token ON user_sessions(token)",
-        "CREATE INDEX idx_admin_sessions_token ON admin_sessions(token)"
-    ];
-
-    $indexCount = 0;
-    foreach ($indexQueries as $indexQuery) {
-        $result = mysqli_query($conn, $indexQuery);
-        if ($result) {
-            $indexCount++;
-        }
-        // Skip errors for duplicate indexes - this is expected on subsequent runs
-    }
-    $results[] = "Processed $indexCount indexes (some may already exist)";
-
     // Insert sample workshop data
     $sampleWorkshops = [
         [
