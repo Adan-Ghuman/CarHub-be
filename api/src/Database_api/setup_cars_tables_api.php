@@ -12,96 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 try {
-    // Array to store results
     $results = [];
 
-    // Admin table
-    $adminTable = "
-    CREATE TABLE IF NOT EXISTS admin (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        username VARCHAR(50) UNIQUE NOT NULL,
-        email VARCHAR(100) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        full_name VARCHAR(100) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )";
-
-    if (mysqli_query($conn, $adminTable)) {
-        $results[] = "Admin table created successfully";
-    } else {
-        $results[] = "Error creating admin table: " . mysqli_error($conn);
-    }
-
-    // Users table
-    $usersTable = "
-    CREATE TABLE IF NOT EXISTS users (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        Name VARCHAR(100) NOT NULL,
-        Email VARCHAR(100) UNIQUE NOT NULL,
-        PhoneNumber VARCHAR(20),
-        userPassword VARCHAR(255) NOT NULL,
-        Location VARCHAR(255),
-        role ENUM('customer', 'workshop_owner') DEFAULT 'customer',
-        is_verified BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )";
-
-    if (mysqli_query($conn, $usersTable)) {
-        $results[] = "Users table created successfully";
-    } else {
-        $results[] = "Error creating users table: " . mysqli_error($conn);
-    }
-
-    // User sessions table
-    $userSessionsTable = "
-    CREATE TABLE IF NOT EXISTS user_sessions (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        user_id INT,
-        user_type ENUM('admin', 'user') NOT NULL,
-        token VARCHAR(255) UNIQUE NOT NULL,
-        expires_at TIMESTAMP NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )";
-
-    if (mysqli_query($conn, $userSessionsTable)) {
-        $results[] = "User sessions table created successfully";
-    } else {
-        $results[] = "Error creating user sessions table: " . mysqli_error($conn);
-    }
-
-    // Admin sessions table
-    $adminSessionsTable = "
-    CREATE TABLE IF NOT EXISTS admin_sessions (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        admin_id INT,
-        token VARCHAR(255) UNIQUE NOT NULL,
-        expires_at TIMESTAMP NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (admin_id) REFERENCES admin(id) ON DELETE CASCADE
-    )";
-
-    if (mysqli_query($conn, $adminSessionsTable)) {
-        $results[] = "Admin sessions table created successfully";
-    } else {
-        $results[] = "Error creating admin sessions table: " . mysqli_error($conn);
-    }
-
-    // Insert default admin
-    $defaultAdmin = "
-    INSERT IGNORE INTO admin (username, email, password, full_name) 
-    VALUES ('admin', 'admin@carhubpk.com', '$2y$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator')";
-
-    if (mysqli_query($conn, $defaultAdmin)) {
-        $results[] = "Default admin created successfully";
-    } else {
-        $results[] = "Error creating default admin: " . mysqli_error($conn);
-    }
-
-    // Cars table
-    $carsTable = "
+    // Create cars table
+    $createCarsTable = "
     CREATE TABLE IF NOT EXISTS cars (
         CarID INT PRIMARY KEY AUTO_INCREMENT,
         MakerID INT DEFAULT 0,
@@ -125,28 +39,28 @@ try {
         FOREIGN KEY (SellerID) REFERENCES users(id) ON DELETE CASCADE
     )";
 
-    if (mysqli_query($conn, $carsTable)) {
+    if (mysqli_query($conn, $createCarsTable)) {
         $results[] = "Cars table created successfully";
     } else {
         $results[] = "Error creating cars table: " . mysqli_error($conn);
     }
 
-    // Makers table
-    $makersTable = "
+    // Create makers table
+    $createMakersTable = "
     CREATE TABLE IF NOT EXISTS tbl_makers (
         id INT PRIMARY KEY AUTO_INCREMENT,
         maker_name VARCHAR(100) NOT NULL UNIQUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
 
-    if (mysqli_query($conn, $makersTable)) {
+    if (mysqli_query($conn, $createMakersTable)) {
         $results[] = "Makers table created successfully";
     } else {
         $results[] = "Error creating makers table: " . mysqli_error($conn);
     }
 
-    // Models table
-    $modelsTable = "
+    // Create models table
+    $createModelsTable = "
     CREATE TABLE IF NOT EXISTS tbl_models (
         id INT PRIMARY KEY AUTO_INCREMENT,
         maker_id INT NOT NULL,
@@ -155,7 +69,7 @@ try {
         FOREIGN KEY (maker_id) REFERENCES tbl_makers(id) ON DELETE CASCADE
     )";
 
-    if (mysqli_query($conn, $modelsTable)) {
+    if (mysqli_query($conn, $createModelsTable)) {
         $results[] = "Models table created successfully";
     } else {
         $results[] = "Error creating models table: " . mysqli_error($conn);
@@ -163,6 +77,7 @@ try {
 
     // Insert sample makers
     $sampleMakers = ['Toyota', 'Honda', 'Suzuki', 'Hyundai', 'Kia', 'Nissan', 'BMW', 'Mercedes-Benz', 'Audi', 'Ford'];
+
     foreach ($sampleMakers as $maker) {
         $insertMaker = "INSERT IGNORE INTO tbl_makers (maker_name) VALUES (?)";
         $stmt = mysqli_prepare($conn, $insertMaker);
@@ -178,6 +93,7 @@ try {
         [2, 'Civic'], [2, 'Accord'], [2, 'City'], [2, 'CR-V'],
         [3, 'Alto'], [3, 'Cultus'], [3, 'Swift'], [3, 'Vitara']
     ];
+
     foreach ($sampleModels as $model) {
         $insertModel = "INSERT IGNORE INTO tbl_models (maker_id, model_name) VALUES (?, ?)";
         $stmt = mysqli_prepare($conn, $insertModel);
@@ -187,17 +103,32 @@ try {
         }
     }
 
+    // Verify tables
+    $verification = [];
+    $tables = ['cars', 'tbl_makers', 'tbl_models'];
+    foreach ($tables as $table) {
+        $result = mysqli_query($conn, "SHOW TABLES LIKE '$table'");
+        if ($result && mysqli_num_rows($result) > 0) {
+            $countResult = mysqli_query($conn, "SELECT COUNT(*) as cnt FROM $table");
+            $count = mysqli_fetch_assoc($countResult)['cnt'];
+            $verification[$table] = "exists with $count records";
+        } else {
+            $verification[$table] = "does not exist";
+        }
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'Database setup completed',
-        'results' => $results
+        'results' => $results,
+        'verification' => $verification
     ]);
 
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Database setup failed: ' . $e->getMessage()
+        'error' => $e->getMessage()
     ]);
 }
 
