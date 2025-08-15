@@ -89,15 +89,34 @@ try {
         $results[] = "Error creating admin sessions table: " . mysqli_error($conn);
     }
 
-    // Insert default admin
-    $defaultAdmin = "
-    INSERT IGNORE INTO admin (username, email, password, full_name) 
-    VALUES ('admin', 'admin@carhubpk.com', '$2y$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator')";
+    // Insert default admin users
+    $defaultAdmins = [
+        [
+            'username' => 'admin',
+            'email' => 'admin@carhubpk.com',
+            'password' => password_hash('admin123', PASSWORD_DEFAULT), // Clear password: admin123
+            'full_name' => 'System Administrator'
+        ],
+        [
+            'username' => 'carhub_admin',
+            'email' => 'carhubadmin@example.com',
+            'password' => password_hash('CarHub2025!', PASSWORD_DEFAULT), // Clear password: CarHub2025!
+            'full_name' => 'CarHub Admin'
+        ]
+    ];
 
-    if (mysqli_query($conn, $defaultAdmin)) {
-        $results[] = "Default admin created successfully";
-    } else {
-        $results[] = "Error creating default admin: " . mysqli_error($conn);
+    foreach ($defaultAdmins as $admin) {
+        $adminInsertQuery = "INSERT IGNORE INTO admin (username, email, password, full_name) VALUES (?, ?, ?, ?)";
+        $stmt = $conn->prepare($adminInsertQuery);
+        if ($stmt) {
+            $stmt->bind_param("ssss", $admin['username'], $admin['email'], $admin['password'], $admin['full_name']);
+            if ($stmt->execute()) {
+                $results[] = "Created admin user: " . $admin['username'] . " (email: " . $admin['email'] . ")";
+            } else {
+                $results[] = "Admin user " . $admin['username'] . " might already exist";
+            }
+            $stmt->close();
+        }
     }
 
     // Cars table
@@ -282,10 +301,217 @@ try {
         $results[] = "Error creating workshop bookings table: " . mysqli_error($conn);
     }
 
+    // Workshop operating hours table
+    $operatingHoursTable = "
+    CREATE TABLE IF NOT EXISTS workshop_operating_hours (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        workshop_id INT NOT NULL,
+        day_of_week ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday') NOT NULL,
+        opening_time TIME,
+        closing_time TIME,
+        is_closed BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_workshop_day (workshop_id, day_of_week)
+    )";
+
+    if (mysqli_query($conn, $operatingHoursTable)) {
+        $results[] = "Workshop operating hours table created successfully";
+    } else {
+        $results[] = "Error creating workshop operating hours table: " . mysqli_error($conn);
+    }
+
+    // Booking status logs table (for audit trail)
+    $bookingStatusLogsTable = "
+    CREATE TABLE IF NOT EXISTS booking_status_logs (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        booking_id INT NOT NULL,
+        old_status ENUM('pending', 'confirmed', 'completed', 'cancelled') NOT NULL,
+        new_status ENUM('pending', 'confirmed', 'completed', 'cancelled') NOT NULL,
+        changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        notes TEXT,
+        FOREIGN KEY (booking_id) REFERENCES workshop_bookings(id) ON DELETE CASCADE
+    )";
+
+    if (mysqli_query($conn, $bookingStatusLogsTable)) {
+        $results[] = "Booking status logs table created successfully";
+    } else {
+        $results[] = "Error creating booking status logs table: " . mysqli_error($conn);
+    }
+
+    // Admin logs table (for admin actions)
+    $adminLogsTable = "
+    CREATE TABLE IF NOT EXISTS admin_logs (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        action_type VARCHAR(100) NOT NULL,
+        target_id INT,
+        target_type VARCHAR(50),
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )";
+
+    if (mysqli_query($conn, $adminLogsTable)) {
+        $results[] = "Admin logs table created successfully";
+    } else {
+        $results[] = "Error creating admin logs table: " . mysqli_error($conn);
+    }
+
+    // Reviews table (alternative name used by some APIs)
+    $reviewsTable = "
+    CREATE TABLE IF NOT EXISTS reviews (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        workshop_id INT NOT NULL,
+        user_id INT NOT NULL,
+        rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+        review_text TEXT,
+        workshop_response TEXT DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )";
+
+    if (mysqli_query($conn, $reviewsTable)) {
+        $results[] = "Reviews table (alternative) created successfully";
+    } else {
+        $results[] = "Error creating reviews table: " . mysqli_error($conn);
+    }
+
+    // Service bookings table (alternative name used by some APIs)
+    $serviceBookingsTable = "
+    CREATE TABLE IF NOT EXISTS service_bookings (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        workshop_id INT NOT NULL,
+        service_id INT NOT NULL,
+        user_id INT NOT NULL,
+        booking_date DATE NOT NULL,
+        booking_time TIME NOT NULL,
+        customer_name VARCHAR(255) NOT NULL,
+        customer_phone VARCHAR(20) NOT NULL,
+        customer_email VARCHAR(255),
+        status ENUM('pending', 'confirmed', 'completed', 'cancelled') DEFAULT 'pending',
+        total_price DECIMAL(10,2) NOT NULL,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE CASCADE,
+        FOREIGN KEY (service_id) REFERENCES workshop_services(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )";
+
+    if (mysqli_query($conn, $serviceBookingsTable)) {
+        $results[] = "Service bookings table (alternative) created successfully";
+    } else {
+        $results[] = "Error creating service bookings table: " . mysqli_error($conn);
+    }
+
+    // Add missing columns to workshop_reviews table for booking_id
+    $addBookingIdColumn = "
+    ALTER TABLE workshop_reviews 
+    ADD COLUMN IF NOT EXISTS booking_id INT DEFAULT NULL,
+    ADD FOREIGN KEY (booking_id) REFERENCES workshop_bookings(id) ON DELETE SET NULL";
+
+    if (mysqli_query($conn, $addBookingIdColumn)) {
+        $results[] = "Added booking_id column to workshop_reviews table";
+    } else {
+        $results[] = "Note: booking_id column might already exist in workshop_reviews";
+    }
+
+    // Add missing columns to workshops table for rating
+    $addRatingColumn = "
+    ALTER TABLE workshops 
+    ADD COLUMN IF NOT EXISTS rating DECIMAL(3,2) DEFAULT 0.0,
+    ADD COLUMN IF NOT EXISTS total_reviews INT DEFAULT 0";
+
+    if (mysqli_query($conn, $addRatingColumn)) {
+        $results[] = "Added rating columns to workshops table";
+    } else {
+        $results[] = "Note: rating columns might already exist in workshops";
+    }
+
+    // Create indexes for better performance
+    $indexQueries = [
+        "CREATE INDEX IF NOT EXISTS idx_workshop_services_workshop_id ON workshop_services(workshop_id)",
+        "CREATE INDEX IF NOT EXISTS idx_workshop_services_active ON workshop_services(is_active)",
+        "CREATE INDEX IF NOT EXISTS idx_workshops_status ON workshops(status)",
+        "CREATE INDEX IF NOT EXISTS idx_workshops_verified ON workshops(is_verified)",
+        "CREATE INDEX IF NOT EXISTS idx_workshop_bookings_workshop_id ON workshop_bookings(workshop_id)",
+        "CREATE INDEX IF NOT EXISTS idx_workshop_bookings_user_id ON workshop_bookings(user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_workshop_bookings_date ON workshop_bookings(booking_date)",
+        "CREATE INDEX IF NOT EXISTS idx_workshop_reviews_workshop_id ON workshop_reviews(workshop_id)",
+        "CREATE INDEX IF NOT EXISTS idx_reviews_workshop_id ON reviews(workshop_id)",
+        "CREATE INDEX IF NOT EXISTS idx_service_bookings_workshop_id ON service_bookings(workshop_id)",
+        "CREATE INDEX IF NOT EXISTS idx_operating_hours_workshop_id ON workshop_operating_hours(workshop_id)"
+    ];
+
+    foreach ($indexQueries as $indexQuery) {
+        if (mysqli_query($conn, $indexQuery)) {
+            $results[] = "Index created successfully";
+        } else {
+            $results[] = "Index creation note: " . mysqli_error($conn);
+        }
+    }
+
+    // Insert sample workshop data
+    $sampleWorkshops = [
+        [
+            'user_id' => 1,
+            'name' => 'AutoCare Workshop',
+            'owner_name' => 'Ahmed Khan',
+            'email' => 'autocare@example.com',
+            'phone' => '+92-300-1234567',
+            'address' => '123 Main Street, Block A',
+            'city' => 'Karachi',
+            'description' => 'Professional car repair and maintenance services',
+            'status' => 'active'
+        ]
+    ];
+
+    foreach ($sampleWorkshops as $workshop) {
+        $insertWorkshopSQL = "INSERT IGNORE INTO workshops (user_id, name, owner_name, email, phone, address, city, description, status) 
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        $stmt = $conn->prepare($insertWorkshopSQL);
+        if ($stmt) {
+            $stmt->bind_param("issssssss", 
+                $workshop['user_id'],
+                $workshop['name'],
+                $workshop['owner_name'],
+                $workshop['email'],
+                $workshop['phone'],
+                $workshop['address'],
+                $workshop['city'],
+                $workshop['description'],
+                $workshop['status']
+            );
+            
+            if ($stmt->execute()) {
+                $results[] = "Added sample workshop: " . $workshop['name'];
+            } else {
+                $results[] = "Workshop sample data might already exist";
+            }
+            $stmt->close();
+        }
+    }
+
     echo json_encode([
         'success' => true,
-        'message' => 'Database setup completed',
-        'results' => $results
+        'message' => 'Database setup completed with all workshop tables and admin users',
+        'results' => $results,
+        'admin_credentials' => [
+            [
+                'username' => 'admin',
+                'email' => 'admin@carhubpk.com',
+                'password' => 'admin123',
+                'description' => 'Default system administrator'
+            ],
+            [
+                'username' => 'carhub_admin',
+                'email' => 'carhubadmin@example.com', 
+                'password' => 'CarHub2025!',
+                'description' => 'CarHub main administrator'
+            ]
+        ]
     ]);
 
 } catch (Exception $e) {
