@@ -479,37 +479,38 @@ try {
 
     // Create indexes for better performance
     $indexQueries = [
-        "CREATE INDEX IF NOT EXISTS idx_workshop_services_workshop_id ON workshop_services(workshop_id)",
-        "CREATE INDEX IF NOT EXISTS idx_workshop_services_active ON workshop_services(is_active)",
-        "CREATE INDEX IF NOT EXISTS idx_workshops_status ON workshops(status)",
-        "CREATE INDEX IF NOT EXISTS idx_workshops_verified ON workshops(is_verified)",
-        "CREATE INDEX IF NOT EXISTS idx_workshop_bookings_workshop_id ON workshop_bookings(workshop_id)",
-        "CREATE INDEX IF NOT EXISTS idx_workshop_bookings_user_id ON workshop_bookings(user_id)",
-        "CREATE INDEX IF NOT EXISTS idx_workshop_bookings_date ON workshop_bookings(booking_date)",
-        "CREATE INDEX IF NOT EXISTS idx_workshop_reviews_workshop_id ON workshop_reviews(workshop_id)",
-        "CREATE INDEX IF NOT EXISTS idx_reviews_workshop_id ON reviews(workshop_id)",
-        "CREATE INDEX IF NOT EXISTS idx_service_bookings_workshop_id ON service_bookings(workshop_id)",
-        "CREATE INDEX IF NOT EXISTS idx_operating_hours_workshop_id ON workshop_operating_hours(workshop_id)",
-        "CREATE INDEX IF NOT EXISTS idx_bookings_workshop_id ON bookings(workshop_id)",
-        "CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id)",
-        "CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(booking_date)",
-        "CREATE INDEX IF NOT EXISTS idx_services_workshop_id ON services(workshop_id)",
-        "CREATE INDEX IF NOT EXISTS idx_services_active ON services(is_active)",
-        "CREATE INDEX IF NOT EXISTS idx_carimages_car_id ON carimages(CarID)",
-        "CREATE INDEX IF NOT EXISTS idx_cars_seller_id ON cars(SellerID)",
-        "CREATE INDEX IF NOT EXISTS idx_cars_status ON cars(carStatus)",
-        "CREATE INDEX IF NOT EXISTS idx_users_email ON users(Email)",
-        "CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)",
-        "CREATE INDEX IF NOT EXISTS idx_admin_username ON admin(username)",
-        "CREATE INDEX IF NOT EXISTS idx_admin_email ON admin(email)",
-        "CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(token)",
-        "CREATE INDEX IF NOT EXISTS idx_admin_sessions_token ON admin_sessions(token)"
+        "CREATE INDEX idx_workshop_services_workshop_id ON workshop_services(workshop_id)",
+        "CREATE INDEX idx_workshop_services_active ON workshop_services(is_active)",
+        "CREATE INDEX idx_workshops_status ON workshops(status)",
+        "CREATE INDEX idx_workshops_verified ON workshops(is_verified)",
+        "CREATE INDEX idx_workshop_bookings_workshop_id ON workshop_bookings(workshop_id)",
+        "CREATE INDEX idx_workshop_bookings_user_id ON workshop_bookings(user_id)",
+        "CREATE INDEX idx_workshop_bookings_date ON workshop_bookings(booking_date)",
+        "CREATE INDEX idx_workshop_reviews_workshop_id ON workshop_reviews(workshop_id)",
+        "CREATE INDEX idx_reviews_workshop_id ON reviews(workshop_id)",
+        "CREATE INDEX idx_service_bookings_workshop_id ON service_bookings(workshop_id)",
+        "CREATE INDEX idx_operating_hours_workshop_id ON workshop_operating_hours(workshop_id)",
+        "CREATE INDEX idx_bookings_workshop_id ON bookings(workshop_id)",
+        "CREATE INDEX idx_bookings_user_id ON bookings(user_id)",
+        "CREATE INDEX idx_bookings_date ON bookings(booking_date)",
+        "CREATE INDEX idx_services_workshop_id ON services(workshop_id)",
+        "CREATE INDEX idx_services_active ON services(is_active)",
+        "CREATE INDEX idx_carimages_car_id ON carimages(CarID)",
+        "CREATE INDEX idx_cars_seller_id ON cars(SellerID)",
+        "CREATE INDEX idx_cars_status ON cars(carStatus)",
+        "CREATE INDEX idx_users_email ON users(Email)",
+        "CREATE INDEX idx_users_role ON users(role)",
+        "CREATE INDEX idx_admin_username ON admin(username)",
+        "CREATE INDEX idx_admin_email ON admin(email)",
+        "CREATE INDEX idx_user_sessions_token ON user_sessions(token)",
+        "CREATE INDEX idx_admin_sessions_token ON admin_sessions(token)"
     ];
 
     foreach ($indexQueries as $indexQuery) {
         if (mysqli_query($conn, $indexQuery)) {
             $results[] = "Index created successfully";
         } else {
+            // Indexes might already exist, this is not critical
             $results[] = "Index creation note: " . mysqli_error($conn);
         }
     }
