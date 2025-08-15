@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-include '../config/config.php';
+include __DIR__ . '/../../config/config.php';
 
 // Decode JSON data from the client
 $data = json_decode(file_get_contents("php://input"), true);

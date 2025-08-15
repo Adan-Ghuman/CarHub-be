@@ -220,6 +220,8 @@ try {
         description TEXT,
         status ENUM('pending', 'active', 'inactive', 'rejected') DEFAULT 'pending',
         is_verified BOOLEAN DEFAULT FALSE,
+        rating DECIMAL(3,2) DEFAULT 0.0,
+        total_reviews INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -259,6 +261,7 @@ try {
         id INT PRIMARY KEY AUTO_INCREMENT,
         workshop_id INT NOT NULL,
         user_id INT NOT NULL,
+        booking_id INT DEFAULT NULL,
         rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
         review_text TEXT,
         workshop_response TEXT DEFAULT NULL,
@@ -403,30 +406,6 @@ try {
         $results[] = "Service bookings table (alternative) created successfully";
     } else {
         $results[] = "Error creating service bookings table: " . mysqli_error($conn);
-    }
-
-    // Add missing columns to workshop_reviews table for booking_id
-    $addBookingIdColumn = "
-    ALTER TABLE workshop_reviews 
-    ADD COLUMN IF NOT EXISTS booking_id INT DEFAULT NULL,
-    ADD FOREIGN KEY (booking_id) REFERENCES workshop_bookings(id) ON DELETE SET NULL";
-
-    if (mysqli_query($conn, $addBookingIdColumn)) {
-        $results[] = "Added booking_id column to workshop_reviews table";
-    } else {
-        $results[] = "Note: booking_id column might already exist in workshop_reviews";
-    }
-
-    // Add missing columns to workshops table for rating
-    $addRatingColumn = "
-    ALTER TABLE workshops 
-    ADD COLUMN IF NOT EXISTS rating DECIMAL(3,2) DEFAULT 0.0,
-    ADD COLUMN IF NOT EXISTS total_reviews INT DEFAULT 0";
-
-    if (mysqli_query($conn, $addRatingColumn)) {
-        $results[] = "Added rating columns to workshops table";
-    } else {
-        $results[] = "Note: rating columns might already exist in workshops";
     }
 
     // Create indexes for better performance

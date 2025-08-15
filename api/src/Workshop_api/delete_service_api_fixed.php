@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-require_once '../config/config.php';
+require_once __DIR__ . '/../../config/config.php';
 
 try {
     // Get input data
