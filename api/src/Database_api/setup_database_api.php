@@ -477,7 +477,7 @@ try {
         $results[] = "Error creating car images table: " . mysqli_error($conn);
     }
 
-    // Create indexes for better performance
+    // Create indexes for better performance (skip if already exist)
     $indexQueries = [
         "CREATE INDEX idx_workshop_services_workshop_id ON workshop_services(workshop_id)",
         "CREATE INDEX idx_workshop_services_active ON workshop_services(is_active)",
@@ -506,14 +506,15 @@ try {
         "CREATE INDEX idx_admin_sessions_token ON admin_sessions(token)"
     ];
 
+    $indexCount = 0;
     foreach ($indexQueries as $indexQuery) {
-        if (mysqli_query($conn, $indexQuery)) {
-            $results[] = "Index created successfully";
-        } else {
-            // Indexes might already exist, this is not critical
-            $results[] = "Index creation note: " . mysqli_error($conn);
+        $result = mysqli_query($conn, $indexQuery);
+        if ($result) {
+            $indexCount++;
         }
+        // Skip errors for duplicate indexes - this is expected on subsequent runs
     }
+    $results[] = "Processed $indexCount indexes (some may already exist)";
 
     // Insert sample workshop data
     $sampleWorkshops = [
