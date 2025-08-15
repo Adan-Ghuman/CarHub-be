@@ -218,6 +218,7 @@ try {
         address TEXT NOT NULL,
         city VARCHAR(100) NOT NULL,
         description TEXT,
+        specialization VARCHAR(255) DEFAULT NULL,
         status ENUM('pending', 'active', 'inactive', 'rejected') DEFAULT 'pending',
         is_verified BOOLEAN DEFAULT FALSE,
         rating DECIMAL(3,2) DEFAULT 0.0,
@@ -408,6 +409,74 @@ try {
         $results[] = "Error creating service bookings table: " . mysqli_error($conn);
     }
 
+    // Bookings table (alternative name used by some APIs) 
+    $bookingsTable = "
+    CREATE TABLE IF NOT EXISTS bookings (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        workshop_id INT NOT NULL,
+        service_id INT NOT NULL,
+        user_id INT NOT NULL,
+        booking_date DATE NOT NULL,
+        booking_time TIME NOT NULL,
+        customer_name VARCHAR(255) NOT NULL,
+        customer_phone VARCHAR(20) NOT NULL,
+        customer_email VARCHAR(255),
+        status ENUM('pending', 'confirmed', 'completed', 'cancelled') DEFAULT 'pending',
+        total_price DECIMAL(10,2) NOT NULL,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE CASCADE,
+        FOREIGN KEY (service_id) REFERENCES workshop_services(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )";
+
+    if (mysqli_query($conn, $bookingsTable)) {
+        $results[] = "Bookings table (alternative) created successfully";
+    } else {
+        $results[] = "Error creating bookings table: " . mysqli_error($conn);
+    }
+
+    // Services table (alternative name used by some APIs)
+    $servicesTable = "
+    CREATE TABLE IF NOT EXISTS services (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        workshop_id INT NOT NULL,
+        service_name VARCHAR(255) NOT NULL,
+        service_category VARCHAR(100) DEFAULT 'General',
+        description TEXT,
+        price DECIMAL(10,2) NOT NULL,
+        estimated_time VARCHAR(50) DEFAULT '60',
+        duration VARCHAR(50) DEFAULT '60',
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE CASCADE
+    )";
+
+    if (mysqli_query($conn, $servicesTable)) {
+        $results[] = "Services table (alternative) created successfully";
+    } else {
+        $results[] = "Error creating services table: " . mysqli_error($conn);
+    }
+
+    // Car images table for uploaded car photos
+    $carImagesTable = "
+    CREATE TABLE IF NOT EXISTS carimages (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        CarID INT NOT NULL,
+        ImageUrl TEXT NOT NULL,
+        is_primary BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (CarID) REFERENCES cars(CarID) ON DELETE CASCADE
+    )";
+
+    if (mysqli_query($conn, $carImagesTable)) {
+        $results[] = "Car images table created successfully";
+    } else {
+        $results[] = "Error creating car images table: " . mysqli_error($conn);
+    }
+
     // Create indexes for better performance
     $indexQueries = [
         "CREATE INDEX IF NOT EXISTS idx_workshop_services_workshop_id ON workshop_services(workshop_id)",
@@ -420,7 +489,21 @@ try {
         "CREATE INDEX IF NOT EXISTS idx_workshop_reviews_workshop_id ON workshop_reviews(workshop_id)",
         "CREATE INDEX IF NOT EXISTS idx_reviews_workshop_id ON reviews(workshop_id)",
         "CREATE INDEX IF NOT EXISTS idx_service_bookings_workshop_id ON service_bookings(workshop_id)",
-        "CREATE INDEX IF NOT EXISTS idx_operating_hours_workshop_id ON workshop_operating_hours(workshop_id)"
+        "CREATE INDEX IF NOT EXISTS idx_operating_hours_workshop_id ON workshop_operating_hours(workshop_id)",
+        "CREATE INDEX IF NOT EXISTS idx_bookings_workshop_id ON bookings(workshop_id)",
+        "CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(booking_date)",
+        "CREATE INDEX IF NOT EXISTS idx_services_workshop_id ON services(workshop_id)",
+        "CREATE INDEX IF NOT EXISTS idx_services_active ON services(is_active)",
+        "CREATE INDEX IF NOT EXISTS idx_carimages_car_id ON carimages(CarID)",
+        "CREATE INDEX IF NOT EXISTS idx_cars_seller_id ON cars(SellerID)",
+        "CREATE INDEX IF NOT EXISTS idx_cars_status ON cars(carStatus)",
+        "CREATE INDEX IF NOT EXISTS idx_users_email ON users(Email)",
+        "CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)",
+        "CREATE INDEX IF NOT EXISTS idx_admin_username ON admin(username)",
+        "CREATE INDEX IF NOT EXISTS idx_admin_email ON admin(email)",
+        "CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(token)",
+        "CREATE INDEX IF NOT EXISTS idx_admin_sessions_token ON admin_sessions(token)"
     ];
 
     foreach ($indexQueries as $indexQuery) {
@@ -442,17 +525,18 @@ try {
             'address' => '123 Main Street, Block A',
             'city' => 'Karachi',
             'description' => 'Professional car repair and maintenance services',
+            'specialization' => 'Engine Repair, Brake Service',
             'status' => 'active'
         ]
     ];
 
     foreach ($sampleWorkshops as $workshop) {
-        $insertWorkshopSQL = "INSERT IGNORE INTO workshops (user_id, name, owner_name, email, phone, address, city, description, status) 
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $insertWorkshopSQL = "INSERT IGNORE INTO workshops (user_id, name, owner_name, email, phone, address, city, description, specialization, status) 
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         $stmt = $conn->prepare($insertWorkshopSQL);
         if ($stmt) {
-            $stmt->bind_param("issssssss", 
+            $stmt->bind_param("isssssssss", 
                 $workshop['user_id'],
                 $workshop['name'],
                 $workshop['owner_name'],
@@ -461,11 +545,41 @@ try {
                 $workshop['address'],
                 $workshop['city'],
                 $workshop['description'],
+                $workshop['specialization'],
                 $workshop['status']
             );
             
             if ($stmt->execute()) {
                 $results[] = "Added sample workshop: " . $workshop['name'];
+                $workshop_id = mysqli_insert_id($conn);
+                
+                // Insert sample services for this workshop
+                $sampleServices = [
+                    ['service_name' => 'Oil Change', 'price' => 2500.00, 'category' => 'Maintenance'],
+                    ['service_name' => 'Brake Repair', 'price' => 8000.00, 'category' => 'Brake Service'],
+                    ['service_name' => 'Engine Diagnostic', 'price' => 3000.00, 'category' => 'Engine Repair']
+                ];
+                
+                foreach ($sampleServices as $service) {
+                    $insertServiceSQL = "INSERT IGNORE INTO workshop_services (workshop_id, service_name, service_category, price) VALUES (?, ?, ?, ?)";
+                    $serviceStmt = $conn->prepare($insertServiceSQL);
+                    if ($serviceStmt) {
+                        $serviceStmt->bind_param("issd", $workshop_id, $service['service_name'], $service['category'], $service['price']);
+                        if ($serviceStmt->execute()) {
+                            $results[] = "Added sample service: " . $service['service_name'];
+                            
+                            // Also add to alternative services table
+                            $insertAltServiceSQL = "INSERT IGNORE INTO services (workshop_id, service_name, service_category, price, duration) VALUES (?, ?, ?, ?, '60')";
+                            $altServiceStmt = $conn->prepare($insertAltServiceSQL);
+                            if ($altServiceStmt) {
+                                $altServiceStmt->bind_param("issd", $workshop_id, $service['service_name'], $service['category'], $service['price']);
+                                $altServiceStmt->execute();
+                                $altServiceStmt->close();
+                            }
+                        }
+                        $serviceStmt->close();
+                    }
+                }
             } else {
                 $results[] = "Workshop sample data might already exist";
             }
