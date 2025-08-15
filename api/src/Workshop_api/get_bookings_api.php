@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || $_SERVER['REQUEST_METHOD'] === 'POST
         // Build query based on parameters
         $query = "SELECT wb.*, 
                          w.name as workshop_name, w.address as workshop_address, w.city as workshop_city, w.phone as workshop_phone,
-                         ws.service_name, ws.service_category, ws.price, ws.duration,
+                         ws.service_name, ws.service_category, ws.price, ws.estimated_time,
                          u.Name as user_name, u.Email as user_email, u.PhoneNumber as user_phone,
                          wr.id as review_id, wr.rating as review_rating, wr.review_text
                   FROM workshop_bookings wb
@@ -90,8 +90,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || $_SERVER['REQUEST_METHOD'] === 'POST
             }
 
             // Get total count for pagination
-            $countQuery = str_replace("SELECT wb.*, w.name as workshop_name, w.address as workshop_address, w.city as workshop_city, w.phone as workshop_phone, ws.service_name, ws.service_category, ws.price, ws.duration, u.Name as user_name, u.Email as user_email, u.PhoneNumber as user_phone FROM workshop_bookings wb LEFT JOIN workshops w ON wb.workshop_id = w.id LEFT JOIN workshop_services ws ON wb.service_id = ws.id LEFT JOIN users u ON wb.user_id = u.id", "SELECT COUNT(*) as total FROM workshop_bookings wb", $query);
-            $countQuery = str_replace(" ORDER BY wb.created_at DESC LIMIT $limit OFFSET $offset", "", $countQuery);
+            $countQuery = "SELECT COUNT(*) as total FROM workshop_bookings wb WHERE 1=1";
+            
+            // Add the same filters to count query
+            if (!empty($userId)) {
+                $countQuery .= " AND wb.user_id = '$userId'";
+            }
+            
+            if (!empty($workshopId)) {
+                $countQuery .= " AND wb.workshop_id = '$workshopId'";
+            }
+            
+            if (!empty($status)) {
+                $countQuery .= " AND wb.status = '$status'";
+            }
             
             $countResult = mysqli_query($conn, $countQuery);
             $totalCount = 0;

@@ -1,22 +1,41 @@
 <?php
-header('content-Type: application/json');
-header('Acess-control-Allow-Orign: *');
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, ngrok-skip-browser-warning');
+
 include __DIR__ . '/../../config/config.php';
 
-$query="SELECT id,maker_name FROM tbl_makers";
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
-if (!empty($conn)) {    
-    $result=mysqli_query($conn,$query) or die("tbl_Makers Query not working !");
-}
-if(mysqli_num_rows($result)>0)
-{
+try {
+    $query = "SELECT id, maker_name FROM tbl_makers ORDER BY maker_name ASC";
 
-    $data=mysqli_fetch_all($result,MYSQLI_ASSOC);
-    echo json_encode($data);
+    if (!empty($conn)) {    
+        $result = mysqli_query($conn, $query);
+        
+        if ($result) {
+            if (mysqli_num_rows($result) > 0) {
+                $data = mysqli_fetch_all($result, MYSQLI_ASSOC);
+                echo json_encode($data);
+            } else {
+                echo json_encode([]);
+            }
+        } else {
+            http_response_code(500);
+            echo json_encode(['error' => 'Query failed: ' . mysqli_error($conn)]);
+        }
+    } else {
+        http_response_code(500);
+        echo json_encode(['error' => 'Database connection failed']);
+    }
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
 }
-else
-{
-        echo json_encode(array('message'=>'No  record found','status'=>false));
-}
+
 mysqli_close($conn);
 ?>

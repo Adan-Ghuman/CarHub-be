@@ -78,6 +78,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $userID = $requestData['userID'];
 
     try {
+        // First check if this userID is actually an admin ID
+        $checkAdminQuery = "SELECT 
+                            id as AdminID, 
+                            username, 
+                            email, 
+                            full_name, 
+                            created_at
+                          FROM admin 
+                          WHERE id = '$userID'";
+        
+        $adminResult = mysqli_query($conn, $checkAdminQuery);
+
+        if ($adminResult && mysqli_num_rows($adminResult) > 0) {
+            // This is an admin, return admin data
+            $adminData = mysqli_fetch_assoc($adminResult);
+            
+            echo json_encode([
+                'success' => true,
+                'AdminID' => $adminData['AdminID'],
+                'id' => $adminData['AdminID'],
+                'username' => $adminData['username'],
+                'email' => $adminData['email'],
+                'full_name' => $adminData['full_name'],
+                'role' => 'admin',
+                'created_at' => $adminData['created_at']
+            ]);
+            mysqli_close($conn);
+            exit;
+        }
+
+        // If not an admin, check in users table
         // Updated query to get all user fields including creation date
         $fetchUserQuery = "SELECT 
                             id as UserID, 
