@@ -23,13 +23,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || $_SERVER['REQUEST_METHOD'] === 'POST
         $query = "SELECT wb.*, 
                          w.name as workshop_name, w.address as workshop_address, w.city as workshop_city, w.phone as workshop_phone,
                          ws.service_name, ws.service_category, ws.price, ws.estimated_time,
-                         u.Name as user_name, u.Email as user_email, u.PhoneNumber as user_phone,
-                         wr.id as review_id, wr.rating as review_rating, wr.review_text
+                         u.Name as user_name, u.Email as user_email, u.PhoneNumber as user_phone
                   FROM workshop_bookings wb
                   LEFT JOIN workshops w ON wb.workshop_id = w.id
                   LEFT JOIN workshop_services ws ON wb.service_id = ws.id
                   LEFT JOIN users u ON wb.user_id = u.id
-                  LEFT JOIN workshop_reviews wr ON wb.id = wr.booking_id AND wb.user_id = wr.user_id
                   WHERE 1=1";
         
         // Add filters
@@ -57,18 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || $_SERVER['REQUEST_METHOD'] === 'POST
                 $booking['price'] = number_format((float)$booking['price'], 2);
                 $booking['booking_datetime'] = $booking['booking_date'] . ' ' . $booking['booking_time'];
                 
-                // Add review information
-                $booking['has_review'] = !empty($booking['review_id']);
-                if ($booking['has_review']) {
-                    $booking['my_rating'] = (int)$booking['review_rating'];
-                    $booking['my_review_text'] = $booking['review_text'];
-                } else {
-                    $booking['my_rating'] = null;
-                    $booking['my_review_text'] = null;
-                }
-                
-                // Remove raw review fields to keep response clean
-                unset($booking['review_id'], $booking['review_rating'], $booking['review_text']);
+                // Add review information (will be fetched separately if needed)
+                $booking['has_review'] = false;
+                $booking['my_rating'] = null;
+                $booking['my_review_text'] = null;
                 
                 // Add status badge color for frontend
                 switch($booking['status']) {
