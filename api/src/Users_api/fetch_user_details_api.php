@@ -19,9 +19,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Validate JSON data
     $requestData = json_decode($jsonInput, true);
-    if ($requestData === null || !isset($requestData['userID'])) {
+    if ($requestData === null || (!isset($requestData['userID']) && !isset($requestData['adminID']))) {
         http_response_code(400);
-        echo json_encode(['error' => 'Invalid JSON data or missing userID']);
+        echo json_encode(['error' => 'Invalid JSON data or missing userID/adminID']);
+        exit;
+    }
+
+    // Check if this is an admin request
+    if (isset($requestData['adminID'])) {
+        $adminID = $requestData['adminID'];
+        
+        try {
+            // Query to get admin details
+            $fetchAdminQuery = "SELECT 
+                                id as AdminID, 
+                                username, 
+                                email, 
+                                full_name, 
+                                created_at
+                              FROM admin 
+                              WHERE id = '$adminID'";
+            
+            $result = mysqli_query($conn, $fetchAdminQuery);
+
+            if ($result && mysqli_num_rows($result) > 0) {
+                $adminData = mysqli_fetch_assoc($result);
+                
+                echo json_encode([
+                    'success' => true,
+                    'AdminID' => $adminData['AdminID'],
+                    'id' => $adminData['AdminID'],
+                    'username' => $adminData['username'],
+                    'email' => $adminData['email'],
+                    'full_name' => $adminData['full_name'],
+                    'role' => 'admin',
+                    'created_at' => $adminData['created_at']
+                ]);
+            } else {
+                http_response_code(404);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Admin not found'
+                ]);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Database error: ' . $e->getMessage()
+            ]);
+        }
+        
+        mysqli_close($conn);
         exit;
     }
 
