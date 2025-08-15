@@ -218,7 +218,6 @@ try {
         address TEXT NOT NULL,
         city VARCHAR(100) NOT NULL,
         description TEXT,
-        specialization VARCHAR(255) DEFAULT NULL,
         status ENUM('pending', 'active', 'inactive', 'rejected') DEFAULT 'pending',
         is_verified BOOLEAN DEFAULT FALSE,
         rating DECIMAL(3,2) DEFAULT 0.0,
@@ -488,18 +487,17 @@ try {
             'address' => '123 Main Street, Block A',
             'city' => 'Karachi',
             'description' => 'Professional car repair and maintenance services',
-            'specialization' => 'Engine Repair, Brake Service',
             'status' => 'active'
         ]
     ];
 
     foreach ($sampleWorkshops as $workshop) {
-        $insertWorkshopSQL = "INSERT IGNORE INTO workshops (user_id, name, owner_name, email, phone, address, city, description, specialization, status) 
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $insertWorkshopSQL = "INSERT IGNORE INTO workshops (user_id, name, owner_name, email, phone, address, city, description, status) 
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         $stmt = $conn->prepare($insertWorkshopSQL);
         if ($stmt) {
-            $stmt->bind_param("isssssssss", 
+            $stmt->bind_param("issssssss", 
                 $workshop['user_id'],
                 $workshop['name'],
                 $workshop['owner_name'],
@@ -508,7 +506,6 @@ try {
                 $workshop['address'],
                 $workshop['city'],
                 $workshop['description'],
-                $workshop['specialization'],
                 $workshop['status']
             );
             
