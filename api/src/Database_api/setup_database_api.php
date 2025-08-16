@@ -547,6 +547,27 @@ try {
         }
     }
 
+    // Add missing columns to workshop_bookings table for revenue tracking
+    $check_total_amount = "SHOW COLUMNS FROM workshop_bookings LIKE 'total_amount'";
+    $total_amount_result = mysqli_query($conn, $check_total_amount);
+    
+    if (mysqli_num_rows($total_amount_result) == 0) {
+        $add_total_amount = "ALTER TABLE workshop_bookings ADD COLUMN total_amount DECIMAL(10,2) DEFAULT 0.00 AFTER booking_time";
+        if (mysqli_query($conn, $add_total_amount)) {
+            $results[] = "Added total_amount column to workshop_bookings table";
+            
+            // Update existing records
+            $update_existing = "UPDATE workshop_bookings SET total_amount = 0.00 WHERE total_amount IS NULL";
+            if (mysqli_query($conn, $update_existing)) {
+                $results[] = "Updated existing workshop_bookings records with default total_amount";
+            }
+        } else {
+            $results[] = "Error adding total_amount column: " . mysqli_error($conn);
+        }
+    } else {
+        $results[] = "total_amount column already exists in workshop_bookings table";
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'Database setup completed with all workshop tables and admin users',
