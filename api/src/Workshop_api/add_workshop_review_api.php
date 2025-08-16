@@ -29,6 +29,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
+        // Debug: Check table structure
+        $debugQuery = "DESCRIBE workshop_reviews";
+        $debugResult = mysqli_query($conn, $debugQuery);
+        $tableStructure = [];
+        if ($debugResult) {
+            while ($row = mysqli_fetch_assoc($debugResult)) {
+                $tableStructure[] = $row['Field'];
+            }
+        }
+        
         // If booking_id is provided, verify the booking exists and belongs to the user
         if (!empty($bookingId)) {
             $bookingQuery = "SELECT wb.id, wb.status, w.name as workshop_name, ws.service_name 
@@ -136,7 +146,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         http_response_code(500);
         echo json_encode([
             'success' => false,
-            'error' => $e->getMessage()
+            'error' => $e->getMessage(),
+            'debug_table_structure' => isset($tableStructure) ? $tableStructure : []
         ]);
     }
 
