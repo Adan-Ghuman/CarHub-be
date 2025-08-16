@@ -14,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Required fields
     $workshopId = isset($data['workshopId']) ? mysqli_real_escape_string($conn, $data['workshopId']) : '';
     $userId = isset($data['user_id']) ? mysqli_real_escape_string($conn, $data['user_id']) : '';
+    $bookingId = isset($data['booking_id']) ? mysqli_real_escape_string($conn, $data['booking_id']) : '';
     $rating = isset($data['rating']) ? (int)$data['rating'] : 0;
     $reviewText = isset($data['review_text']) ? mysqli_real_escape_string($conn, trim($data['review_text'])) : '';
 
