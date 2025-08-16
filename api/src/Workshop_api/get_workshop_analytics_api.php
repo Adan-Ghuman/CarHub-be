@@ -36,20 +36,21 @@ try {
     $workshop_id = (int)$data['workshop_id'];
     $period = $data['period'] ?? 'month';
     
-    // Create database connection using MySQLi
-    $pdo = new PDO("mysql:host=" . $servername . ";dbname=" . $database, $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // Use the existing PDO connection from config.php
+    if (!$pdo) {
+        throw new Exception("Database connection not available");
+    }
     
     // Get basic workshop statistics
     $statsQuery = "
         SELECT 
             COUNT(CASE WHEN b.status = 'completed' THEN 1 END) as total_bookings,
-            SUM(CASE WHEN b.status = 'completed' THEN b.price ELSE 0 END) as total_revenue,
+            SUM(CASE WHEN b.status = 'completed' THEN b.total_price ELSE 0 END) as total_revenue,
             COUNT(CASE WHEN b.status = 'pending' THEN 1 END) as pending_bookings,
             COUNT(CASE WHEN b.status = 'confirmed' THEN 1 END) as confirmed_bookings,
             COUNT(CASE WHEN b.status = 'cancelled' THEN 1 END) as cancelled_bookings,
             COUNT(DISTINCT b.user_id) as total_customers
-        FROM bookings b
+        FROM workshop_bookings b
         WHERE b.workshop_id = ?
     ";
     
@@ -70,7 +71,7 @@ try {
     // Get average rating
     $ratingQuery = "
         SELECT AVG(rating) as average_rating, COUNT(*) as total_reviews
-        FROM reviews 
+        FROM workshop_reviews 
         WHERE workshop_id = ?
     ";
     $ratingStmt = $pdo->prepare($ratingQuery);
@@ -80,7 +81,7 @@ try {
     // Get total services count
     $servicesQuery = "
         SELECT COUNT(*) as total_services
-        FROM services 
+        FROM workshop_services 
         WHERE workshop_id = ? AND is_active = 1
     ";
     $servicesStmt = $pdo->prepare($servicesQuery);
@@ -89,8 +90,8 @@ try {
     
     // Get monthly revenue for current month
     $monthlyRevenueQuery = "
-        SELECT SUM(price) as monthly_revenue
-        FROM bookings 
+        SELECT SUM(total_price) as monthly_revenue
+        FROM workshop_bookings 
         WHERE workshop_id = ? 
         AND status = 'completed'
         AND MONTH(created_at) = MONTH(CURRENT_DATE())
@@ -103,7 +104,7 @@ try {
     // Get today's bookings
     $todayQuery = "
         SELECT COUNT(*) as today_bookings
-        FROM bookings 
+        FROM workshop_bookings 
         WHERE workshop_id = ? 
         AND DATE(created_at) = CURRENT_DATE()
     ";
@@ -114,7 +115,7 @@ try {
     // Get weekly bookings
     $weeklyQuery = "
         SELECT COUNT(*) as weekly_bookings
-        FROM bookings 
+        FROM workshop_bookings 
         WHERE workshop_id = ? 
         AND created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 WEEK)
     ";
