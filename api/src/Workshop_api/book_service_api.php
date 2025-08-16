@@ -78,6 +78,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
+        // Get service details including price
+        $service = mysqli_fetch_assoc($serviceResult);
+        $totalPrice = $service['price'];
+
         // Verify user exists
         $userQuery = "SELECT name FROM users WHERE id = '$userId'";
         $userResult = mysqli_query($conn, $userQuery);
@@ -110,9 +114,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Create booking
         $insertQuery = "INSERT INTO workshop_bookings 
-                       (workshop_id, service_id, user_id, booking_date, booking_time, customer_name, customer_phone, notes, status, created_at) 
+                       (workshop_id, service_id, user_id, booking_date, booking_time, customer_name, customer_phone, notes, total_price, status, created_at) 
                        VALUES 
-                       ('$workshopId', '$serviceId', '$userId', '$bookingDate', '$bookingTime', '$customerName', '$customerPhone', '$notes', 'pending', NOW())";
+                       ('$workshopId', '$serviceId', '$userId', '$bookingDate', '$bookingTime', '$customerName', '$customerPhone', '$notes', '$totalPrice', 'pending', NOW())";
 
         if (mysqli_query($conn, $insertQuery)) {
             $bookingId = mysqli_insert_id($conn);

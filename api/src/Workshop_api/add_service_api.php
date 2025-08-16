@@ -51,9 +51,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Insert new service - updated field names
         $insertQuery = "INSERT INTO workshop_services 
-                       (workshop_id, service_name, service_category, description, price, duration, is_active, created_at) 
+                       (workshop_id, service_name, service_category, description, price, is_active, created_at) 
                        VALUES 
-                       ('$workshopId', '$serviceName', '$serviceCategory', '$description', '$price', '$duration', TRUE, NOW())";
+                       ('$workshopId', '$serviceName', '$serviceCategory', '$description', '$price', TRUE, NOW())";
 
         if (mysqli_query($conn, $insertQuery)) {
             $serviceId = mysqli_insert_id($conn);
