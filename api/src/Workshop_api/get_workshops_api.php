@@ -14,20 +14,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || $_SERVER['REQUEST_METHOD'] === 'POST
     $limit = isset($data['limit']) ? (int)$data['limit'] : 50;
     $offset = isset($data['offset']) ? (int)$data['offset'] : 0;
     
-    // Check if this is an admin request
-    $isAdmin = isset($_GET['admin']) && $_GET['admin'] === 'true';
+    // Check if this is an admin request (both GET and POST)
+    $isAdmin = (isset($_GET['admin']) && $_GET['admin'] === 'true') || 
+               (isset($data['admin']) && $data['admin'] === 'true') ||
+               (isset($data['admin']) && $data['admin'] === true);
 
     try {
         if ($isAdmin) {
-            // Admin query - get all workshops with additional info
+            // Admin query - get all workshops with additional info (simplified)
             $query = "SELECT w.*, 
-                             COUNT(DISTINCT wr.id) as reviews_count,
-                             COUNT(DISTINCT ws.id) as services_count,
-                             COALESCE(AVG(wr.rating), 0) as average_rating
+                             0 as reviews_count,
+                             0 as services_count,
+                             0 as average_rating
                       FROM workshops w 
-                      LEFT JOIN workshop_reviews wr ON w.id = wr.workshop_id
-                      LEFT JOIN workshop_services ws ON w.id = ws.workshop_id AND ws.is_active = TRUE
-                      GROUP BY w.id 
                       ORDER BY w.created_at DESC 
                       LIMIT $limit OFFSET $offset";
         } else {
