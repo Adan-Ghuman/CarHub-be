@@ -55,12 +55,9 @@ try {
                 r.created_at,
                 u.Name as customer_name,
                 u.Email as customer_email,
-                b.id as booking_id,
-                s.service_name
+                NULL as workshop_response
             FROM workshop_reviews r
-            JOIN workshop_bookings b ON r.booking_id = b.id
-            JOIN users u ON b.user_id = u.id
-            JOIN workshop_services s ON b.service_id = s.id
+            JOIN users u ON r.user_id = u.id
             WHERE r.workshop_id = ?
             ORDER BY r.created_at DESC
             LIMIT ? OFFSET ?";
@@ -125,8 +122,7 @@ try {
             'comment' => $review['comment'],
             'customer_name' => $review['customer_name'],
             'customer_email' => $review['customer_email'],
-            'service_name' => $review['service_name'],
-            'booking_id' => $review['booking_id'],
+            'workshop_response' => $review['workshop_response'],
             'created_at' => $review['created_at'],
             'formatted_date' => date('M j, Y', strtotime($review['created_at']))
         ];
