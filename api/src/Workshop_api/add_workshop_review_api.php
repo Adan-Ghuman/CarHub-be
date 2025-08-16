@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = !empty($bookingId) ? 'Your review for this booking has been updated successfully!' : 'Your review for this workshop has been updated successfully!';
                 $isUpdate = true;
             } else {
-                throw new Exception('Failed to update review: ' . mysqli_error($conn));
+                throw new Exception('Failed to update review: ' . mysqli_error($conn) . ' | Query: ' . $updateQuery);
             }
         } else {
             // Insert new review
@@ -112,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = !empty($bookingId) ? 'Thank you! Your review for this booking has been submitted successfully!' : 'Thank you! Your review has been submitted successfully!';
                 $isUpdate = false;
             } else {
-                throw new Exception('Failed to add review: ' . mysqli_error($conn));
+                throw new Exception('Failed to add review: ' . mysqli_error($conn) . ' | Query: ' . $insertQuery);
             }
         }
 
