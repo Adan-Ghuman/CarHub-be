@@ -77,11 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Update existing review
             if (!empty($bookingId)) {
                 $updateQuery = "UPDATE workshop_reviews 
-                               SET rating = '$rating', review_text = '$reviewText', updated_at = NOW()
+                               SET rating = '$rating', review_text = '$reviewText'
                                WHERE booking_id = '$bookingId' AND user_id = '$userId'";
             } else {
                 $updateQuery = "UPDATE workshop_reviews 
-                               SET rating = '$rating', review_text = '$reviewText', updated_at = NOW()
+                               SET rating = '$rating', review_text = '$reviewText'
                                WHERE workshop_id = '$workshopId' AND user_id = '$userId' AND booking_id IS NULL";
             }
             
