@@ -11,6 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || $_SERVER['REQUEST_METHOD'] === 'POST
     
     $data = json_decode(file_get_contents("php://input"), true);
     $city = isset($data['city']) ? mysqli_real_escape_string($conn, $data['city']) : '';
+    $user_id = isset($data['user_id']) ? (int)$data['user_id'] : null;
     $limit = isset($data['limit']) ? (int)$data['limit'] : 50;
     $offset = isset($data['offset']) ? (int)$data['offset'] : 0;
     
@@ -27,8 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || $_SERVER['REQUEST_METHOD'] === 'POST
                              0 as services_count,
                              0 as average_rating
                       FROM workshops w 
-                      ORDER BY w.created_at DESC 
-                      LIMIT $limit OFFSET $offset";
+                      WHERE 1=1";
+            
+            if ($user_id !== null) {
+                $query .= " AND w.user_id = $user_id";
+            }
+            
+            $query .= " ORDER BY w.created_at DESC LIMIT $limit OFFSET $offset";
         } else {
             // Regular query for active and verified workshops
             $query = "SELECT w.*, 
@@ -40,6 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' || $_SERVER['REQUEST_METHOD'] === 'POST
             
             if (!empty($city)) {
                 $query .= " AND w.city = '$city'";
+            }
+            
+            if ($user_id !== null) {
+                $query .= " AND w.user_id = $user_id";
             }
             
             $query .= " GROUP BY w.id ORDER BY rating DESC, w.created_at DESC LIMIT $limit OFFSET $offset";

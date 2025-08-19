@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'PUT
             'address' => ['type' => 's', 'required' => false, 'max_length' => 500],
             'phone' => ['type' => 's', 'required' => false, 'max_length' => 20],
             'email' => ['type' => 's', 'required' => false, 'max_length' => 255],
-            'specialization' => ['type' => 's', 'required' => false, 'max_length' => 255],
+            'specialization' => ['type' => 's', '' => false, 'max_length' => 255],
             'city' => ['type' => 's', 'required' => false, 'max_length' => 100],
             'owner_name' => ['type' => 's', 'required' => false, 'max_length' => 255]
         ];
